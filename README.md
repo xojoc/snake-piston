@@ -5,8 +5,8 @@ This is the classical Snake game developed with [Rust](http://rust-lang.org) usi
 
 # Install
 ```
-git clone http://github.com/xojoc/piston-snake
-cd piston-snake
+git clone http://github.com/xojoc/snake-piston
+cd snake-piston
 cargo run
 # Have fun...
 ```
