@@ -15,7 +15,7 @@ cargo run
 Simply move the Snake around using the keyboard arrows and eat apples. The more apples you eat the more point you gain and the more the Snake goes faster.
 The following keys are recognised
 
- * **UP/RIGHT/DOWN/LEFT** arrows to move the Snake
+ * **UP/RIGHT/DOWN/LEFT** to move the Snake
  * **ESC** Quit
  * **R** Restart
  * **P** Pause
