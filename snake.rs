@@ -21,6 +21,10 @@ extern crate graphics;
 extern crate glutin_window;
 extern crate opengl_graphics;
 extern crate rand;
+#[macro_use]
+extern crate lazy_static;
+
+use std::collections::HashMap;
 
 use graphics::*;
 use opengl_graphics::{ GlGraphics, OpenGL };
@@ -75,7 +79,7 @@ impl Snake {
         }
     }
 
-    fn mv(g: &mut Game, dtxy: (f64,f64)) {
+    fn mv(g: &mut Game, dtxy: &(f64,f64)) {
         let mut xy = (g.snake.tail[g.snake.headi].0 + dtxy.0, g.snake.tail[g.snake.headi].1 + dtxy.1);
         if xy.0 >= BOARD_WIDTH as f64 {
             xy.0 = 0.0;
@@ -112,20 +116,21 @@ impl Snake {
 
     fn update(g: &mut Game) {
         use piston::input::keyboard::Key::*;
-        match g.snake.last_pressed {
-            Right => {
-                Snake::mv(g, (1.0, 0.0));
-            },
-            Down => {
-                Snake::mv(g, (0.0, 1.0));
-            },
-            Left => {
-                Snake::mv(g, (-1.0, 0.0));
-            },
-            Up => {
-                Snake::mv(g, (0.0, -1.0));
-            },
-            _ => {panic!("only UP/DOWN/LEFT/UP arrows allowed")},
+
+        lazy_static! {
+            static ref MOVING_REMAP: HashMap<Key, (f64, f64)> = {
+                let mut m = HashMap::new();
+                m.insert(Right, (1.0, 0.0));
+                m.insert(Down, (0.0, 1.0));
+                m.insert(Left, (-1.0, 0.0));
+                m.insert(Up, (0.0, -1.0));
+                m
+            };
+        }
+
+        match MOVING_REMAP.get(&g.snake.last_pressed) {
+            Some(x) => Snake::mv(g, x),
+            None => panic!("only UP/DOWN/LEFT/UP arrows allowed")
         }
     }
 
@@ -376,6 +381,18 @@ impl Game {
 }
 
 fn main() {
+    lazy_static! {
+        static ref PREV_MOVE_REMAP: HashMap<Key, Key> = {
+            use piston::input::keyboard::Key::*;
+            let mut m = HashMap::new();
+            m.insert(Right, Left);
+            m.insert(Down, Up);
+            m.insert(Left, Right);
+            m.insert(Up, Down);
+            m
+        };
+    }
+
     println!("R => Restart\nP => Pause\nEsc => Quit");
     let window = Window::new(
         WindowSettings::new("Snake - Piston",
@@ -389,7 +406,16 @@ fn main() {
         }
 
         if let Some(Button::Keyboard(key)) = e.press_args() {
-            game.key_press(key);
+            // println!("now: {:?}, last: {:?}", key, game.last_key ); // debug
+
+            if let Some(x) = PREV_MOVE_REMAP.get(&key) {
+                if x != &game.last_key {
+                    game.key_press(key);
+                }
+            } else {
+                game.key_press(key);
+            }
+
         }
 
         if let Some(args) = e.update_args() {
