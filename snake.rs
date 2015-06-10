@@ -66,8 +66,9 @@ impl Snake {
 
     fn key_press(&mut self, k: Key) {
         use piston::input::keyboard::Key::*;
-        if k == Right || k == Down || k == Left || k == Up {
-            self.last_pressed = k;
+        match k {
+            Right | Down | Left | Up => self.last_pressed = k,
+            _ => {},
         }
     }
 
@@ -107,21 +108,13 @@ impl Snake {
 
     fn update(g: &mut Game) {
         use piston::input::keyboard::Key::*;
-        match g.snake.last_pressed {
-            Right => {
-                Snake::mv(g, (1, 0));
-            },
-            Down => {
-                Snake::mv(g, (0, 1));
-            },
-            Left => {
-                Snake::mv(g, (-1, 0));
-            },
-            Up => {
-                Snake::mv(g, (0, -1));
-            },
-            _ => {panic!("only UP/DOWN/LEFT/UP arrows allowed")},
-        }
+        Snake::mv(g, match g.snake.last_pressed {
+            Right =>  (1, 0),
+            Down => (0, 1),
+            Left => (-1, 0),
+            Up => (0, -1),
+            _ => panic!("only UP/DOWN/LEFT/UP arrows allowed"),
+        })
     }
 
     fn collides(&self, xy: (i8,i8)) -> bool {
