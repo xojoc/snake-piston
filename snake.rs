@@ -51,9 +51,11 @@ struct Snake {
 
 impl Snake {
     fn new(tail: Vec<(i8, i8)>, key: Key) -> Snake {
-        Snake{tail: tail,
-              headi: 0,
-              last_pressed: key,}
+        Snake {
+            tail: tail,
+            headi: 0,
+            last_pressed: key,
+        }
     }
     
     fn index(&self, i: isize) -> usize {
@@ -64,14 +66,16 @@ impl Snake {
         for p in self.tail.iter() {
             rectangle(color::hex("8ba673"),
                       rectangle::square(p.0 as f64 * TILE_SIZE, p.1 as f64 * TILE_SIZE, TILE_SIZE),
-                      t, gfx);
+                      t, gfx
+            );
         }
     }
 
     fn key_press(&mut self, k: Key) {
         use piston::input::keyboard::Key::*;
-        if k == Right || k == Down || k == Left || k == Up {
-            self.last_pressed = k;
+        match k {
+            Right | Down | Left | Up => self.last_pressed = k,
+            _ => {},
         }
     }
 
@@ -112,21 +116,13 @@ impl Snake {
 
     fn update(g: &mut Game) {
         use piston::input::keyboard::Key::*;
-        match g.snake.last_pressed {
-            Right => {
-                Snake::mv(g, (1, 0));
-            },
-            Down => {
-                Snake::mv(g, (0, 1));
-            },
-            Left => {
-                Snake::mv(g, (-1, 0));
-            },
-            Up => {
-                Snake::mv(g, (0, -1));
-            },
-            _ => {panic!("only UP/DOWN/LEFT/UP arrows allowed")},
-        }
+        Snake::mv(g, match g.snake.last_pressed {
+            Right =>  (1, 0),
+            Down => (0, 1),
+            Left => (-1, 0),
+            Up => (0, -1),
+            _ => panic!("only UP/DOWN/LEFT/UP arrows allowed"),
+        })
     }
 
     fn collides(&self, xy: (i8,i8)) -> bool {
@@ -152,11 +148,13 @@ impl Food {
     fn new(t: FoodType, xy: (i8,i8), s: u32, lt: u32, probability: f64) -> Option<Food> {
         let mut rng = rand::thread_rng();
         if rng.gen_range(0.0, 100.0) < probability {
-            Some(Food{food_type: t,
-                       xy: xy,
-                       score: s,
-                       life_time: lt,
-                       lived_time: 0})
+            Some(Food {
+                    food_type: t,
+                    xy: xy,
+                    score: s,
+                    life_time: lt,
+                    lived_time: 0
+            })
         } else {
             None
         }
@@ -166,21 +164,25 @@ impl Food {
         loop {
             let mut rng = rand::thread_rng();
             let xy = (rng.gen_range(0,BOARD_WIDTH),
-                          rng.gen_range(0,BOARD_HEIGHT));
-            if !(g.snake.tail.iter().any(|t| *t == xy) || g.food.iter().any(|f| f.xy == xy) || g.walls.iter().any(|w| *w == xy) || g.invisible_walls.iter().any(|w| *w == xy)) {
+                      rng.gen_range(0,BOARD_HEIGHT));
+
+            if !(g.snake.tail.iter().any(|t| *t == xy) ||
+                 g.food.iter().any(|f| f.xy == xy) ||
+                 g.walls.iter().any(|w| *w == xy) ||
+                 g.invisible_walls.iter().any(|w| *w == xy)) {
                 return xy;
             }
         }
     }
 
     fn update(g: &mut Game) {
-        if !g.food.iter().any(|f| if f.food_type == FoodType::Apple { true } else { false } ) {
+        if !g.food.iter().any(|f| f.food_type == FoodType::Apple) {
             if let Some(f) = Food::new(FoodType::Apple, Food::genxy(g), 10, 45, 100.0) {
                 g.food.push(f)
             }            
         } 
 
-        if !g.food.iter().any(|f| if f.food_type == FoodType::Candy { true } else { false } ) {
+        if !g.food.iter().any(|f| f.food_type == FoodType::Candy) {
             if let Some(f) = Food::new(FoodType::Candy, Food::genxy(g), 50, 15, 1.0) {
                 g.food.push(f)
             }
@@ -199,17 +201,13 @@ impl Food {
         if self.life_time - self.lived_time < 6 && self.lived_time % 2 == 0 {
             return
         }
-        match self.food_type {
-            FoodType::Apple => {
-                rectangle(color::hex("b83e3e"),
-                          rectangle::square(self.xy.0 as f64 * TILE_SIZE, self.xy.1 as f64 * TILE_SIZE, TILE_SIZE),
-                          t, gfx);
-            },
-            FoodType::Candy => {
-                rectangle(color::hex("b19d46"),
-                          rectangle::square(self.xy.0 as f64 * TILE_SIZE, self.xy.1 as f64 * TILE_SIZE, TILE_SIZE),
-                          t, gfx);},
-        }
+
+        let color = match self.food_type {
+            FoodType::Apple => color::hex("b83e3e"),
+            FoodType::Candy => color::hex("b19d46"),
+        };
+
+        rectangle(color, rectangle::square(self.xy.0 as f64 * TILE_SIZE, self.xy.1 as f64 * TILE_SIZE, TILE_SIZE), t, gfx);
     }
 }
 
@@ -242,7 +240,8 @@ fn level1() -> Level {
         (1,14),(2,14),(3,14),(4,14),(5,14),(6,14),(8,14),(9,14),(10,14),(11,14),(12,14),(13,14),
         (0,1),(0,2),(0,3),(0,4),(0,5),(0,6),(0,8),(0,9),(0,10),(0,11),(0,12),(0,13),
         (7,7),
-        ];
+    ];
+
     let iw = vec![(0,0),(7,0),(14,0),(14,7),(14,14),(7,14),(0,14),(0,7)];
 
     Level {
@@ -257,7 +256,8 @@ fn level2() -> Level {
         (2,2),(3,3),(4,4),(5,5),(7,7),(9,9),(10,10),(11,11),(12,12),
         (12,2),(11,3),(10,4),(9,5),(7,7),(5,9),(4,10),(3,11),(2,12),
         (0,7),(7,0),(14,7),(7,14),
-        ];
+    ];
+    
     let iw = vec![];
 
     Level {
@@ -334,9 +334,9 @@ impl Game {
     }
 
     fn update(&mut self, args: &UpdateArgs) {
-        if self.state == State::Paused {return}
-        if self.state == State::GameOver {
-            return;
+        match self.state {
+            State::Paused | State::GameOver => return,
+            _ => {},
         }
 
         self.time += args.dt;
@@ -362,11 +362,14 @@ impl Game {
                 self.food = vec![];
                 self.score = 0;
                 self.last_key = Key::Unknown;
-                return;},
+                return;
+            },
             (Key::P, State::Playing) => {
-                self.state = State::Paused;},
+                self.state = State::Paused;
+            },
             (Key::P, State::Paused) => {
-                self.state = State::Playing;},
+                self.state = State::Playing;
+            },
             _ => {
                 self.last_key = key;
 
@@ -379,11 +382,14 @@ fn main() {
     use glutin_window::GlutinWindow as Window;
     use piston::window::WindowSettings;
     println!("R => Restart\nP => Pause\nEsc => Quit");
+    
     let window = Window::new(
         WindowSettings::new("Snake - Piston",
                             [BOARD_WIDTH as u32 * TILE_SIZE as u32, BOARD_HEIGHT as u32 * TILE_SIZE as u32])
             .exit_on_esc(true));
+    
     let mut game = Game::new();
+    
     for e in window.events() {
         use piston::input::Button;
         if let Some(args) = e.render_args() {
