@@ -69,10 +69,16 @@ impl Snake {
 
     fn key_press(&mut self, k: Key) {
         use piston::input::keyboard::Key::*;
+        // Don't allow a player to kill themselves by doing a 180
         match k {
-            Right | Down | Left | Up => self.last_pressed = k,
-            _ => {},
+            Right if self.last_pressed != Left => {},
+            Left if self.last_pressed != Right => {},
+            Up if self.last_pressed != Down => {},
+            Down if self.last_pressed != Up => {}
+            _ => return
         }
+
+        self.last_pressed = k;
     }
 
     fn mv(g: &mut Game, dtxy: (i8, i8)) {
