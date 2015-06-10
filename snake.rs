@@ -56,10 +56,6 @@ impl Snake {
               last_pressed: key,}
     }
     
-    fn index(&self, i: isize) -> usize {
-        ((self.tail.len() as isize + i) as usize + self.headi) % self.tail.len()
-    }
-
     fn render(&self, t: math::Matrix2d, gfx: &mut GlGraphics) {
         for p in self.tail.iter() {
             rectangle(color::hex("8ba673"),
@@ -105,9 +101,8 @@ impl Snake {
                 break;
             }
         }
-        let headi = g.snake.index(-1);
-        g.snake.headi = headi;
-        g.snake.tail[headi] = xy;
+        g.snake.tail.pop();
+        g.snake.tail.insert(0, xy);
     }
 
     fn update(g: &mut Game) {
