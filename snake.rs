@@ -24,15 +24,15 @@ extern crate rand;
 
 use graphics::*;
 use opengl_graphics::{ GlGraphics, OpenGL };
-use glutin_window::GlutinWindow as Window;
-use piston::window::WindowSettings;
+//use glutin_window::GlutinWindow as Window;
+//use piston::window::WindowSettings;
 use piston::event::*;
 use piston::input::keyboard::Key;
 use rand::{thread_rng, Rng};
 
 // width and height must never change
-const BOARD_WIDTH: u32 = 15;
-const BOARD_HEIGHT: u32 = 15;
+const BOARD_WIDTH: i8 = 15;
+const BOARD_HEIGHT: i8 = 15;
 const TILE_SIZE: f64 = 50.0;
 const UPDATE_TIME: f64 = 0.15;
 
@@ -44,13 +44,13 @@ enum State {
 }
 
 struct Snake {
-    tail: Vec<(f64,f64)>,
+    tail: Vec<(i8,i8)>,
     headi: usize,
     last_pressed: Key,
 }
 
 impl Snake {
-    fn new(tail: Vec<(f64, f64)>, key: Key) -> Snake {
+    fn new(tail: Vec<(i8, i8)>, key: Key) -> Snake {
         Snake{tail: tail,
               headi: 0,
               last_pressed: key,}
@@ -63,7 +63,7 @@ impl Snake {
     fn render(&self, t: math::Matrix2d, gfx: &mut GlGraphics) {
         for p in self.tail.iter() {
             rectangle(color::hex("8ba673"),
-                      rectangle::square(p.0*TILE_SIZE, p.1*TILE_SIZE, TILE_SIZE),
+                      rectangle::square(p.0 as f64 * TILE_SIZE, p.1 as f64 * TILE_SIZE, TILE_SIZE),
                       t, gfx);
         }
     }
@@ -75,19 +75,19 @@ impl Snake {
         }
     }
 
-    fn mv(g: &mut Game, dtxy: (f64,f64)) {
+    fn mv(g: &mut Game, dtxy: (i8, i8)) {
         let mut xy = (g.snake.tail[g.snake.headi].0 + dtxy.0, g.snake.tail[g.snake.headi].1 + dtxy.1);
-        if xy.0 >= BOARD_WIDTH as f64 {
-            xy.0 = 0.0;
+        if xy.0 >= BOARD_WIDTH {
+            xy.0 = 0;
         }
-        if xy.0 < 0.0 {
-            xy.0 = (BOARD_WIDTH-1) as f64;
+        if xy.0 < 0 {
+            xy.0 = BOARD_WIDTH-1;
         }
-        if xy.1 >= BOARD_HEIGHT as f64 {
-            xy.1 = 0.0;
+        if xy.1 >= BOARD_HEIGHT {
+            xy.1 = 0;
         }
-        if xy.1 < 0.0 {
-            xy.1 = (BOARD_HEIGHT-1) as f64;
+        if xy.1 < 0 {
+            xy.1 = BOARD_HEIGHT-1;
         }
 
         if g.walls.collides(xy) || g.snake.collides(xy) {
@@ -114,22 +114,22 @@ impl Snake {
         use piston::input::keyboard::Key::*;
         match g.snake.last_pressed {
             Right => {
-                Snake::mv(g, (1.0, 0.0));
+                Snake::mv(g, (1, 0));
             },
             Down => {
-                Snake::mv(g, (0.0, 1.0));
+                Snake::mv(g, (0, 1));
             },
             Left => {
-                Snake::mv(g, (-1.0, 0.0));
+                Snake::mv(g, (-1, 0));
             },
             Up => {
-                Snake::mv(g, (0.0, -1.0));
+                Snake::mv(g, (0, -1));
             },
             _ => {panic!("only UP/DOWN/LEFT/UP arrows allowed")},
         }
     }
 
-    fn collides(&self, xy: (f64,f64)) -> bool {
+    fn collides(&self, xy: (i8,i8)) -> bool {
         self.tail.iter().any(|t| *t == xy)
     }
 }
@@ -142,15 +142,15 @@ enum FoodType {
 
 struct Food {
     food_type: FoodType,
-    xy: (f64,f64),
+    xy: (i8,i8),
     score: u32,
     life_time: u32, 
     lived_time: u32,
 }
 
 impl Food {
-    fn new(t: FoodType, xy: (f64,f64), s: u32, lt: u32, probability: f64) -> Option<Food> {
-        let mut rng = thread_rng();
+    fn new(t: FoodType, xy: (i8,i8), s: u32, lt: u32, probability: f64) -> Option<Food> {
+        let mut rng = rand::thread_rng();
         if rng.gen_range(0.0, 100.0) < probability {
             Some(Food{food_type: t,
                        xy: xy,
@@ -162,12 +162,11 @@ impl Food {
         }
     }
 
-    fn genxy(g: &Game) -> (f64,f64) {
+    fn genxy(g: &Game) -> (i8,i8) {
         loop {
-            let mut rng = thread_rng();
-            let xy_int = (rng.gen_range(0,BOARD_WIDTH),
+            let mut rng = rand::thread_rng();
+            let xy = (rng.gen_range(0,BOARD_WIDTH),
                           rng.gen_range(0,BOARD_HEIGHT));
-            let xy = (xy_int.0 as f64, xy_int.1 as f64);
             if !(g.snake.tail.iter().any(|t| *t == xy) || g.food.iter().any(|f| f.xy == xy) || g.walls.iter().any(|w| *w == xy) || g.invisible_walls.iter().any(|w| *w == xy)) {
                 return xy;
             }
@@ -203,51 +202,51 @@ impl Food {
         match self.food_type {
             FoodType::Apple => {
                 rectangle(color::hex("b83e3e"),
-                          rectangle::square(self.xy.0*TILE_SIZE, self.xy.1*TILE_SIZE, TILE_SIZE),
+                          rectangle::square(self.xy.0 as f64 * TILE_SIZE, self.xy.1 as f64 * TILE_SIZE, TILE_SIZE),
                           t, gfx);
             },
             FoodType::Candy => {
                 rectangle(color::hex("b19d46"),
-                          rectangle::square(self.xy.0*TILE_SIZE, self.xy.1*TILE_SIZE, TILE_SIZE),
+                          rectangle::square(self.xy.0 as f64 * TILE_SIZE, self.xy.1 as f64 * TILE_SIZE, TILE_SIZE),
                           t, gfx);},
         }
     }
 }
 
 trait Collides {
-    fn collides(&self, xy: (f64,f64)) -> bool;
+    fn collides(&self, xy: (i8,i8)) -> bool;
 }
 
 impl Collides for Vec<Food> {
-    fn collides(&self, xy: (f64,f64)) -> bool {
+    fn collides(&self, xy: (i8,i8)) -> bool {
         self.iter().any(|f| f.xy == xy)
     }
 }
 
-impl Collides for Vec<(f64,f64)> {
-    fn collides(&self, xy: (f64,f64)) -> bool {
+impl Collides for Vec<(i8,i8)> {
+    fn collides(&self, xy: (i8,i8)) -> bool {
         self.iter().any(|z| *z == xy)
     }
 }
 
 struct Level {
     snake: Snake,
-    walls: Vec<(f64, f64)>,
-    invisible_walls: Vec<(f64, f64)>,
+    walls: Vec<(i8,i8)>,
+    invisible_walls: Vec<(i8,i8)>,
 }
 
 fn level1() -> Level {
     let w = vec![
-        (1.0,0.0),(2.0,0.0),(3.0,0.0),(4.0,0.0),(5.0,0.0),(6.0,0.0),(8.0,0.0),(9.0,0.0),(10.0,0.0),(11.0,0.0),(12.0,0.0),(13.0,0.0),
-        (14.0,1.0),(14.0,2.0),(14.0,3.0),(14.0,4.0),(14.0,5.0),(14.0,6.0),(14.0,8.0),(14.0,9.0),(14.0,10.0),(14.0,11.0),(14.0,12.0),(14.0,13.0),
-        (1.0,14.0),(2.0,14.0),(3.0,14.0),(4.0,14.0),(5.0,14.0),(6.0,14.0),(8.0,14.0),(9.0,14.0),(10.0,14.0),(11.0,14.0),(12.0,14.0),(13.0,14.0),
-        (0.0,1.0),(0.0,2.0),(0.0,3.0),(0.0,4.0),(0.0,5.0),(0.0,6.0),(0.0,8.0),(0.0,9.0),(0.0,10.0),(0.0,11.0),(0.0,12.0),(0.0,13.0),
-        (7.0,7.0),
+        (1,0),(2,0),(3,0),(4,0),(5,0),(6,0),(8,0),(9,0),(10,0),(11,0),(12,0),(13,0),
+        (14,1),(14,2),(14,3),(14,4),(14,5),(14,6),(14,8),(14,9),(14,10),(14,11),(14,12),(14,13),
+        (1,14),(2,14),(3,14),(4,14),(5,14),(6,14),(8,14),(9,14),(10,14),(11,14),(12,14),(13,14),
+        (0,1),(0,2),(0,3),(0,4),(0,5),(0,6),(0,8),(0,9),(0,10),(0,11),(0,12),(0,13),
+        (7,7),
         ];
-    let iw = vec![(0.0,0.0),(7.0,0.0),(14.0,0.0),(14.0,7.0),(14.0,14.0),(7.0,14.0),(0.0,14.0),(0.0,7.0)];
+    let iw = vec![(0,0),(7,0),(14,0),(14,7),(14,14),(7,14),(0,14),(0,7)];
 
     Level {
-        snake: Snake::new(vec![(2.0,3.0), (2.0,2.0), (2.0,1.0)], Key::Down),
+        snake: Snake::new(vec![(2,3), (2,2), (2,1)], Key::Down),
         walls: w,
         invisible_walls: iw,
     }
@@ -255,21 +254,21 @@ fn level1() -> Level {
 
 fn level2() -> Level {
     let w = vec![
-        (2.0,2.0),(3.0,3.0),(4.0,4.0),(5.0,5.0),(7.0,7.0),(9.0,9.0),(10.0,10.0),(11.0,11.0),(12.0,12.0),
-        (12.0,2.0),(11.0,3.0),(10.0,4.0),(9.0,5.0),(7.0,7.0),(5.0,9.0),(4.0,10.0),(3.0,11.0),(2.0,12.0),
-        (0.0,7.0),(7.0,0.0),(14.0,7.0),(7.0,14.0),
+        (2,2),(3,3),(4,4),(5,5),(7,7),(9,9),(10,10),(11,11),(12,12),
+        (12,2),(11,3),(10,4),(9,5),(7,7),(5,9),(4,10),(3,11),(2,12),
+        (0,7),(7,0),(14,7),(7,14),
         ];
     let iw = vec![];
 
     Level {
-        snake: Snake::new(vec![(0.0,0.0), (1.0,0.0), (2.0,0.0)], Key::Down),
+        snake: Snake::new(vec![(0,0), (1,0), (2,0)], Key::Down),
         walls: w,
         invisible_walls: iw,
     }
 }
 
 fn rand_level() -> Level {
-    let mut rng = thread_rng();
+    let mut rng = rand::thread_rng();
     match rng.gen_range(0,2) {
         0 => level1(),
         1 => level2(),
@@ -284,8 +283,8 @@ struct Game {
     time: f64,
     update_time: f64,
     state: State,
-    walls: Vec<(f64,f64)>,
-    invisible_walls: Vec<(f64,f64)>,
+    walls: Vec<(i8,i8)>,
+    invisible_walls: Vec<(i8,i8)>,
     food: Vec<Food>,
     score: u32,
     last_key: Key,
@@ -293,6 +292,7 @@ struct Game {
 
 impl Game {
     fn new() -> Game {
+        
         let opengl = OpenGL::_3_2;
         let gl = GlGraphics::new(opengl);
         let l = rand_level();
@@ -326,7 +326,7 @@ impl Game {
 
         for w in &self.walls {
             rectangle(color::hex("002951"),
-                      rectangle::square(w.0*TILE_SIZE, w.1*TILE_SIZE, TILE_SIZE),
+                      rectangle::square(w.0 as f64 * TILE_SIZE, w.1 as f64 * TILE_SIZE, TILE_SIZE),
                       Context::new_viewport(args.viewport()).transform, &mut self.gfx);
 
         }
@@ -376,10 +376,12 @@ impl Game {
 }
 
 fn main() {
+    use glutin_window::GlutinWindow as Window;
+    use piston::window::WindowSettings;
     println!("R => Restart\nP => Pause\nEsc => Quit");
     let window = Window::new(
         WindowSettings::new("Snake - Piston",
-                            [BOARD_WIDTH * TILE_SIZE as u32, BOARD_HEIGHT * TILE_SIZE as u32])
+                            [BOARD_WIDTH as u32 * TILE_SIZE as u32, BOARD_HEIGHT as u32 * TILE_SIZE as u32])
             .exit_on_esc(true));
     let mut game = Game::new();
     for e in window.events() {
