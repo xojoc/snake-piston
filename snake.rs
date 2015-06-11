@@ -46,6 +46,7 @@ enum State {
 struct Snake {
     tail: Vec<(i8,i8)>,
     headi: usize,
+    keys: Vec<Key>,
     last_pressed: Key,
 }
 
@@ -54,6 +55,7 @@ impl Snake {
         Snake {
             tail: tail,
             headi: 0,
+            keys: vec![],
             last_pressed: key,
         }
     }
@@ -70,7 +72,7 @@ impl Snake {
     fn key_press(&mut self, k: Key) {
         use piston::input::keyboard::Key::*;
         match k {
-            Right | Down | Left | Up => self.last_pressed = k,
+            Right | Down | Left | Up => { self.keys.push(k); self.last_pressed = k; },
             _ => {},
         }
     }
@@ -111,7 +113,11 @@ impl Snake {
 
     fn update(g: &mut Game) {
         use piston::input::keyboard::Key::*;
-        Snake::mv(g, match g.snake.last_pressed {
+        if g.snake.keys.is_empty() {
+            g.snake.keys.push(g.snake.last_pressed);
+        }
+        let k = g.snake.keys.remove(0);
+        Snake::mv(g, match k {
             Right =>  (1, 0),
             Down => (0, 1),
             Left => (-1, 0),
@@ -282,7 +288,6 @@ struct Game {
     invisible_walls: Vec<(i8,i8)>,
     food: Vec<Food>,
     score: u32,
-    last_key: Key,
 }
 
 impl Game {
@@ -300,7 +305,6 @@ impl Game {
               invisible_walls: l.invisible_walls,
               food: vec![],
               score: 0,
-              last_key: Key::Unknown,
         }
     }
 
@@ -338,7 +342,6 @@ impl Game {
 
         if self.time > self.update_time {
             self.time -= self.update_time;
-            self.snake.key_press(self.last_key);
             Snake::update(self);
             Food::update(self);
         }
@@ -356,7 +359,6 @@ impl Game {
                 self.invisible_walls = l.invisible_walls;
                 self.food = vec![];
                 self.score = 0;
-                self.last_key = Key::Unknown;
                 return;
             },
             (Key::P, State::Playing) => {
@@ -366,8 +368,7 @@ impl Game {
                 self.state = State::Playing;
             },
             _ => {
-                self.last_key = key;
-
+                self.snake.key_press(key);
             }
         };
     }
