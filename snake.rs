@@ -290,7 +290,6 @@ fn rand_level() -> Level {
 
     
 struct Game {
-    gfx: GlGraphics,
     snake: Snake,
     time: f64,
     update_time: f64,
@@ -303,12 +302,8 @@ struct Game {
 
 impl Game {
     fn new() -> Game {
-        
-        let opengl = OpenGL::_3_2;
-        let gl = GlGraphics::new(opengl);
         let l = rand_level();
-        Game {gfx: gl,
-              snake: l.snake,
+        Game {snake: l.snake,
               time: UPDATE_TIME,
               update_time: UPDATE_TIME,
               state: State::Playing,
@@ -319,37 +314,34 @@ impl Game {
         }
     }
 
-    fn render(&mut self, args: &RenderArgs) {
-        let t = Context::new_viewport(args.viewport()).transform;
+    fn render(&mut self, t: math::Matrix2d, gfx: &mut GlGraphics) {
         if self.state == State::GameOver {
-            clear(color::hex("000000"), &mut self.gfx);
+            clear(color::hex("000000"), gfx);
             return;
         }
 
-        clear(color::hex("001122"), &mut self.gfx);
+        clear(color::hex("001122"), gfx);
 
         for ref mut f in &self.food {
-            f.render(t, &mut self.gfx);
+            f.render(t, gfx);
         }
 
-        self.snake.render(t, &mut self.gfx);
+        self.snake.render(t, gfx);
 
         for w in &self.walls {
             rectangle(color::hex("002951"),
                       rectangle::square(w.x as f64 * TILE_SIZE, w.y as f64 * TILE_SIZE, TILE_SIZE),
-                      Context::new_viewport(args.viewport()).transform, &mut self.gfx);
-
+                      t, gfx);
         }
-
     }
 
-    fn update(&mut self, args: &UpdateArgs) {
+    fn update(&mut self, dt: f64) {
         match self.state {
             State::Paused | State::GameOver => return,
             _ => {},
         }
 
-        self.time += args.dt;
+        self.time += dt;
 
         if self.time > self.update_time {
             self.time -= self.update_time;
@@ -396,12 +388,15 @@ fn main() {
                             [BOARD_WIDTH as u32 * TILE_SIZE as u32, BOARD_HEIGHT as u32 * TILE_SIZE as u32])
             .exit_on_esc(true));
     
+    let mut gfx = GlGraphics::new(OpenGL::_3_2);
+
     let mut game = Game::new();
     
     for e in window.events() {
         use piston::input::Button;
         if let Some(args) = e.render_args() {
-            game.render(&args);
+            let t = Context::new_viewport(args.viewport()).transform;
+            game.render(t, &mut gfx);
         }
 
         if let Some(Button::Keyboard(key)) = e.press_args() {
@@ -409,7 +404,7 @@ fn main() {
         }
 
         if let Some(args) = e.update_args() {
-            game.update(&args);
+            game.update(args.dt);
         }
     }
 }
