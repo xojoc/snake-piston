@@ -219,11 +219,11 @@ impl Food {
 macro_rules! walls {
     ( $( $x:expr, $y:expr ),* ) => {
         {
-            let mut v = Vec::new();
+            vec![
             $(
-                v.push(Point{x:$x, y:$y});
+                Point{x:$x, y:$y},
             )*
-            v
+            ]
         }
     };
 }
