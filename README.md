@@ -20,8 +20,6 @@ The following keys are recognised
  * **R** Restart
  * **P** Pause
 
-If you press an arrow which is the opposite of the snake's direction, it dies.
-
 # Who?
 *snake-piston* was written by Alexandru Cojocaru (http://xojoc.pw).
 
