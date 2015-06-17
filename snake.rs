@@ -50,6 +50,16 @@ struct Snake {
     last_pressed: Key,
 }
 
+fn reverse_direction(key: Key) -> Key {
+    match key {
+        Key::Down => Key::Up,
+        Key::Up => Key::Down,
+        Key::Left => Key::Right,
+        Key::Right => Key::Left,
+        other => other,
+    }
+}
+
 impl Snake {
     fn new(tail: VecDeque<Point>, key: Key) -> Snake {
         Snake {
@@ -71,7 +81,7 @@ impl Snake {
     fn key_press(&mut self, k: Key) {
         use piston::input::keyboard::Key::*;
         match k {
-            Right | Down | Left | Up => {
+            Right | Down | Left | Up if reverse_direction(k) != self.last_pressed => {
                 self.keys.push_back(k);
                 self.last_pressed = k;
             },
