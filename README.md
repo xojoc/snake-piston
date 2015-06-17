@@ -27,3 +27,5 @@ If you press an arrow which is the opposite of the snake's direction, it dies.
 
 # License
 *snake-piston* is released under the GPLv3 or later, see [COPYING](COPYING).
+
+# [Donate](http://xojoc.pw/donate.html)
