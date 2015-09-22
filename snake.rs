@@ -23,7 +23,8 @@ use std::collections::VecDeque;
 
 use graphics::*;
 use opengl_graphics::{ GlGraphics, OpenGL };
-use piston::event::*;
+use piston::event_loop::Events;
+use piston::input::{Button, Event, Input, RenderEvent};
 use piston::input::keyboard::Key;
 use rand::{thread_rng, Rng};
 
@@ -396,25 +397,29 @@ fn main() {
     let window = Window::new(
         WindowSettings::new("Snake - Piston",
                             [BOARD_WIDTH as u32 * TILE_SIZE as u32, BOARD_HEIGHT as u32 * TILE_SIZE as u32])
-            .exit_on_esc(true));
+            .exit_on_esc(true)
+		).unwrap();
     
-    let mut gfx = GlGraphics::new(OpenGL::_3_2);
+    let mut gfx = GlGraphics::new(OpenGL::V3_2);
 
     let mut game = Game::new();
-    
+
     for e in window.events() {
-        use piston::input::Button;
-        if let Some(args) = e.render_args() {
-            let t = Context::new_viewport(args.viewport()).transform;
-            game.render(t, &mut gfx);
-        }
+        match e {
+            Event::Render(args) => {
+                let t = Context::new_viewport(args.viewport()).transform;
+                game.render(t, &mut gfx);
+            }
 
-        if let Some(Button::Keyboard(key)) = e.press_args() {
-            game.key_press(key);
-        }
+            Event::Input(Input::Press(Button::Keyboard(key))) => {
+                game.key_press(key);
+            }
 
-        if let Some(args) = e.update_args() {
-            game.update(args.dt);
+            Event::Update(args) => {
+                game.update(args.dt);
+            }
+
+            _ => {}
         }
     }
 }
