@@ -18,13 +18,17 @@ extern crate graphics;
 extern crate glutin_window;
 extern crate opengl_graphics;
 extern crate rand;
+extern crate piston_window;
+use piston::PressEvent;
+use piston::UpdateEvent;
 
+use piston_window::{ WindowSettings};
 use std::collections::VecDeque;
+use piston::event_loop::{Events, EventLoop, EventSettings};
+use piston::input::{Button, Event, Input, RenderEvent};
 
 use graphics::*;
 use opengl_graphics::{ GlGraphics, OpenGL };
-use piston::event_loop::Events;
-use piston::input::{Button, Event, Input, RenderEvent};
 use piston::input::keyboard::Key;
 use rand::{thread_rng, Rng};
 
@@ -33,7 +37,7 @@ use rand::{thread_rng, Rng};
 const BOARD_WIDTH: i8 = 15;
 const BOARD_HEIGHT: i8 = 15;
 const TILE_SIZE: f64 = 50.0;
-const UPDATE_TIME: f64 = 0.15;
+const UPDATE_TIME: f64 = 0.5;
 
 #[derive(PartialEq, Copy, Clone)]
 enum State {
@@ -70,12 +74,15 @@ impl Snake {
         }
     }
     
-    fn render(&self, t: math::Matrix2d, gfx: &mut GlGraphics) {
+    fn render(&self, t: Viewport, gfx: &mut GlGraphics) {
         for p in self.tail.iter() {
-            rectangle(color::hex("8ba673"),
+
+            gfx.draw(t, |a,b| {
+               rectangle(color::hex("8ba673"),
                       rectangle::square(p.x as f64 * TILE_SIZE, p.y as f64 * TILE_SIZE, TILE_SIZE),
-                      t, gfx
-            );
+                      t.abs_transform(), b
+               );
+            });
         }
     }
 
@@ -325,16 +332,16 @@ impl Game {
         }
     }
 
-    fn render(&mut self, t: math::Matrix2d, gfx: &mut GlGraphics) {
+    fn render(&mut self, t: Viewport, gfx: &mut  GlGraphics) {
         if self.state == State::GameOver {
             clear(color::hex("000000"), gfx);
             return;
         }
 
-        clear(color::hex("001122"), gfx);
+        clear(color::hex("0000565"), gfx);
 
         for ref mut f in &self.food {
-            f.render(t, gfx);
+            f.render(t.abs_transform(), gfx);
         }
 
         self.snake.render(t, gfx);
@@ -342,7 +349,7 @@ impl Game {
         for w in &self.walls {
             rectangle(color::hex("002951"),
                       rectangle::square(w.x as f64 * TILE_SIZE, w.y as f64 * TILE_SIZE, TILE_SIZE),
-                      t, gfx);
+                      t.abs_transform(), gfx);
         }
     }
 
@@ -389,37 +396,38 @@ impl Game {
 }
 
 fn main() {
-    use glutin_window::GlutinWindow as Window;
-    use piston::window::WindowSettings;
-
     println!("R => Restart\nP => Pause\nEsc => Quit");
 
-    let window = Window::new(
-        WindowSettings::new("Snake - Piston",
+   use glutin_window::GlutinWindow;
+
+
+    let mut window: GlutinWindow = WindowSettings::new("Snake - Piston",
                             [BOARD_WIDTH as u32 * TILE_SIZE as u32, BOARD_HEIGHT as u32 * TILE_SIZE as u32])
             .exit_on_esc(true)
-		).unwrap();
+                .build().expect("!!Zopa");
     
-    let mut gfx = GlGraphics::new(OpenGL::V3_2);
+  let mut gfx = GlGraphics::new(OpenGL::V3_2);
 
     let mut game = Game::new();
 
-    for e in window.events() {
-        match e {
-            Event::Render(args) => {
-                let t = Context::new_viewport(args.viewport()).transform;
-                game.render(t, &mut gfx);
+    let event_settings = EventSettings::new();
+   let mut events = Events::new(event_settings);
+
+    while let Some(e) = events.next(&mut window) {
+            if let Some(args) = e.render_args() {
+                let t = args.viewport();
+                  game.render(t, &mut gfx);
             }
 
-            Event::Input(Input::Press(Button::Keyboard(key))) => {
+            if let Some(button) = e.press_args() {
+                if let Button::Keyboard(key) = button {
                 game.key_press(key);
+                             }
             }
 
-            Event::Update(args) => {
+            if let Some(args) = e.update_args(){
                 game.update(args.dt);
             }
 
-            _ => {}
         }
-    }
 }
