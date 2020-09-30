@@ -24,13 +24,13 @@ use piston::UpdateEvent;
 
 use piston_window::{ WindowSettings};
 use std::collections::VecDeque;
-use piston::event_loop::{Events, EventLoop, EventSettings};
-use piston::input::{Button, Event, Input, RenderEvent};
+use piston::event_loop::{Events, EventSettings};
+use piston::input::{Button, RenderEvent};
 
 use graphics::*;
 use opengl_graphics::{ GlGraphics, OpenGL };
 use piston::input::keyboard::Key;
-use rand::{thread_rng, Rng};
+use rand::{Rng};
 
     
 // If you change width and height also change the levelN functions
@@ -75,15 +75,15 @@ impl Snake {
     }
     
     fn render(&self, t: Viewport, gfx: &mut GlGraphics) {
-        for p in self.tail.iter() {
+          gfx.draw(t, |_a,b| {
 
-            gfx.draw(t, |a,b| {
+             for p in self.tail.iter() {
                rectangle(color::hex("8ba673"),
                       rectangle::square(p.x as f64 * TILE_SIZE, p.y as f64 * TILE_SIZE, TILE_SIZE),
                       t.abs_transform(), b
                );
-            });
-        }
+             }
+         });
     }
 
     fn key_press(&mut self, k: Key) {
@@ -220,17 +220,17 @@ impl Food {
         }
     }
 
-    fn render(&self, t: math::Matrix2d, gfx: &mut GlGraphics) {
+    fn render(&self, t: Viewport, gfx: &mut GlGraphics) {
         if self.life_time - self.lived_time < 6 && self.lived_time % 2 == 0 {
             return
         }
-
-        let color = match self.food_type {
+        gfx.draw(t, |_a,b| {
+          let color = match self.food_type {
             FoodType::Apple => color::hex("b83e3e"),
             FoodType::Candy => color::hex("b19d46"),
-        };
-
-        rectangle(color, rectangle::square(self.xy.x as f64 * TILE_SIZE, self.xy.y as f64 * TILE_SIZE, TILE_SIZE), t, gfx);
+          };
+          rectangle(color, rectangle::square(self.xy.x as f64 * TILE_SIZE, self.xy.y as f64 * TILE_SIZE, TILE_SIZE), t.abs_transform(), b);
+        });
     }
 }
 
@@ -341,16 +341,19 @@ impl Game {
         clear(color::hex("0000565"), gfx);
 
         for ref mut f in &self.food {
-            f.render(t.abs_transform(), gfx);
+            f.render(t, gfx);
         }
 
         self.snake.render(t, gfx);
 
-        for w in &self.walls {
+        gfx.draw(t, |_a,b| {
+          for w in &self.walls {
             rectangle(color::hex("002951"),
                       rectangle::square(w.x as f64 * TILE_SIZE, w.y as f64 * TILE_SIZE, TILE_SIZE),
-                      t.abs_transform(), gfx);
-        }
+                      t.abs_transform(), b);
+           }
+
+        });
     }
 
     fn update(&mut self, dt: f64) {
